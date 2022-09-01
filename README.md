@@ -1,4 +1,4 @@
-# Downloader Bot
+# Downloader Bot - DEV
 
 ## Features
 
@@ -22,8 +22,8 @@
 * Clone the repo or download the `.zip` file
     * If you downloaded `.zip` file, unpack it anywhere you want.
 * Create `.env` file and enter the following variables:
-    `BOT_TOKEN` - Token of your Telegram bot
-    `ME` - Obtain `from_id` of your profile ( it will be used, so no one but you can access the bot )
-    `DEFAULT_DOWNLOAD_LOCATION` - Download folder. E.g: `C:\/Downloads\/`
-    `TELEGRAPH_TOKEN` <sup>optional</sup> - Telegra.ph token
+    * `BOT_TOKEN` - Token of your Telegram bot
+    * `ME` - Obtain `from_id` of your profile ( it will be used, so no one but you can access the bot )
+    * `DEFAULT_DOWNLOAD_LOCATION` - Download folder. E.g: `C:\/Downloads\/`
+    * `TELEGRAPH_TOKEN` <sup>optional</sup> - Telegra.ph token
 * Run `npm install` to install all necessary node modules.
