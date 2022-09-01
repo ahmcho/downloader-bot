@@ -1,0 +1,18 @@
+{
+  "name": "downloader",
+  "version": "1.0.0",
+  "description": "Downloader Bot",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "AhmCho",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.25.0",
+    "chalk": "^2.4.1",
+    "dotenv": "^16.0.0",
+    "iconv-lite": "^0.6.3",
+    "telegraf": "^4.7.0"
+  }
+}
