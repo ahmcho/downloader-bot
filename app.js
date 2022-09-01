@@ -139,20 +139,16 @@ bot.hears(/mp3 (.+)/, async (ctx) =>{
                 const fileSizeMB = Math.ceil(fs.statSync(downloadedFile).size/(Math.pow(1024,2)));
                 //Check if filesize is less than 50mb
                 if(fileSizeMB < 50 ){
-                    let sendingFileMessage = await ctx.telegram.sendMessage(from_id, "Sending file ⏳");
-                    //const unnecessaryRegex = /(\[.*\])/gm;
-                    //let trashFilenameMatch = formatedFileName.match(unnecessaryRegex);
+                    let sendingFileMessage = await ctx.telegram.sendMessage(from_id, "Sending file ⏳");                                        
                     let splitted = formatedFileName.split('\\');
-                    let filenameFromSplitted = splitted[splitted.length-1];
-                    // return console.log(filenameFromSplitted);
+                    let filenameFromSplitted = splitted[splitted.length-1];                    
                     if(filenameFromSplitted.includes('-')){
                         // It has official video
                         [artist, title] = filenameFromSplitted.replace(/(\[.*\])/gm,'').split(/\s\-\s/gm);
                     } else {
                         // It does not have it
                         artist = "Untitled Artist"
-                        title = filenameFromSplitted
-                        //[artist, title] = formatedFileName.trim().split(/\s\-\s/gm);
+                        title = filenameFromSplitted                
                     }
                     title = title.trim();
                     artist = artist.trim();
@@ -379,8 +375,7 @@ bot.hears(/video (.+)/, async (ctx) => {
                 // Parsing results after checking available formats
                 formatOptions = getCurrentStreamOptions(outputStr);
                 
-                // Start downloading
-                //args.push(['-v']);
+                // Start downloading            
                 args.push(['--add-header'], ['Cookie:COOKIE_STRING_EXTRACTED_FROM_BROWSER'], messageText);
                 args.push([`-P ${fullPath}`]);
                 /*
@@ -412,7 +407,7 @@ bot.hears(/video (.+)/, async (ctx) => {
                     info = `ℹ️   Downloading single Youtube video\n`;
                     args.push([`-o`],[`Youtube Video/%(title)s.%(ext)s`]);
                 }
-                //return console.log(args);
+                
                 let sentMessage = await ctx.reply('Downloading...');
                 let message_id = sentMessage.message_id;
                 let from_id = sentMessage.chat.id;
