@@ -379,8 +379,7 @@ bot.hears(/video (.+)/, async (ctx) => {
                 // Parsing results after checking available formats
                 formatOptions = getCurrentStreamOptions(outputStr);
                 
-                // Start downloading
-                //args.push(['-v']);
+                // Start downloading            
                 args.push(['--add-header'], ['Cookie:COOKIE_STRING_EXTRACTED_FROM_BROWSER'], messageText);
                 args.push([`-P ${fullPath}`]);
                 /*
