@@ -1,0 +1,29 @@
+# Downloader Bot
+
+## Features
+
+- Uses [Telegraf.js](https://telegraf.js.org/) framework
+- Downloads from various websites such as YouTube, Facebook, Reddit and etc. 
+- Ability to download YouTube music videos directly to .mp3
+- Rich UI to show statistics of each downloadable file.
+- Automatic channel / playlist detection for YouTube.
+- Provided the cookie is present, ability to bypass restrictions .
+
+## Prerequisites
+
+| Prerequisites |
+|:-------------:|
+| [Node JS](https://nodejs.org/en/download/) |
+| [yt-dlp](https://github.com/yt-dlp/yt-dlp)     |
+| [ffmpeg](https://ffmpeg.org/download.html)     |
+
+## Installation
+
+1. Clone the repo or download the `.zip` file
+    1.1. If you downloaded `.zip` file, unpack it anywhere you want.
+2. Create `.env` file and enter the following variables:
+    `BOT_TOKEN` - Token of your Telegram bot
+    `ME` - Obtain `from_id` of your profile ( it will be used, so no one but you can access the bot )
+    `DEFAULT_DOWNLOAD_LOCATION` - Download folder. E.g: `C:\/Downloads\/`
+    `TELEGRAPH_TOKEN` <sup>optional</sup> - Telegra.ph token
+3. Run `npm install` to install all necessary node modules.
