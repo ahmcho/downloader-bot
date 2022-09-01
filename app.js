@@ -585,7 +585,9 @@ bot.start(async (ctx) => {
 });
 
 
-bot.launch()
+bot.launch().then(() => {
+    console.log('Bot launched');
+});
   
 // Enable graceful stop
 process.once('SIGINT', () => bot.stop('SIGINT'))
