@@ -16,6 +16,10 @@ const PAGE_URL_REGEX = /\?page=\w+(&?\w+=\d+){0,3}/gm;
 const MARKDOWN_LIST_ITEM_REGEX = /\*\*(.*)\*\*/gmi;
 //  ⬆️ parse list item in a Markdown file/text
 const DOMAIN_EXTRACTOR_REGEX = /^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n?]+)/gim;
+//  ⬆️ extract domain from the link
+const UNWANTED_CHARACTERS_IN_FILENAME_REGEX_1 = / *(\([^)]*\))|(\[[^)]*\]) */g;
+const  UNWANTED_CHARACTERS_IN_FILENAME_REGEX_2= /(\[).*(\])?/g;
+
 
 const PER_PAGE = 30;
 const YT_DLP_GITHUB_RELEASE_URL = "https://api.github.com/repos/yt-dlp/yt-dlp/releases";
@@ -34,5 +38,7 @@ module.exports = {
     MARKDOWN_LIST_ITEM_REGEX,
     PAGE_URL_REGEX,
     PLAYLIST_PROGRESS_REGEX,
-    DOMAIN_EXTRACTOR_REGEX
+    DOMAIN_EXTRACTOR_REGEX,
+    UNWANTED_CHARACTERS_IN_FILENAME_REGEX_1,
+    UNWANTED_CHARACTERS_IN_FILENAME_REGEX_2
 };
