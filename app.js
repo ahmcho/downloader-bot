@@ -14,7 +14,9 @@ const {
     PER_PAGE,
     DOMAIN_EXTRACTOR_REGEX,
     PAGE_URL_REGEX,
-    PLAYLIST_PROGRESS_REGEX
+    PLAYLIST_PROGRESS_REGEX,
+    UNWANTED_CHARACTERS_IN_FILENAME_REGEX_1,
+    UNWANTED_CHARACTERS_IN_FILENAME_REGEX_2
 } = require('./constants');
 
 const {paginate} = require('./libs/paginate');
@@ -54,6 +56,7 @@ let isChannel = false;
 let playlistProgress;
 let downloadedFile = '';
 let error = '';
+let currentProcess;
 
 bot.on('document', async(ctx) => {
     // User provided cookie file
@@ -69,6 +72,10 @@ bot.on('document', async(ctx) => {
 bot.hears(/mp3 (.+)/, async (ctx) =>{
     if(ctx.update.message.from.id == process.env.ME || ctx.update.message.chat.id == process.env.ME){
         //  ⬆️ Failsafe to prevent others from using this bot, otherwise everyone will be send links for downloading to YOUR computer.
+        if(currentProcess && currentProcess.pid){
+            //There is a process running, TODO: add message to queue;
+            return await ctx.reply('Please wait for your queue!');
+        }
         const messageText = ctx.match[1];
         let foundMatches = messageText.match(YOUTUBE_URL_REGEX); 
         
@@ -87,9 +94,9 @@ bot.hears(/mp3 (.+)/, async (ctx) =>{
                 convert video to .mp3 after it has been downloaded
             */
             info = `ℹ️ Downloading video as mp3`;
-            downloader = spawn('yt-dlp',args); //Spawning yt-dlp process with arguments
+            currentProcess = spawn('yt-dlp',args); //Spawning yt-dlp process with arguments
             //downloader.stdout.setEncoding('ascii');
-            downloader.stdout.on('data', async (data) => {
+            currentProcess.stdout.on('data', async (data) => {
                 console.log(data.toString());
                 bufferData = iconv.decode(data,'win1251').toString();
                 if(bufferData.includes('ExtractAudio') && bufferData.includes('Destination')){
@@ -113,82 +120,48 @@ bot.hears(/mp3 (.+)/, async (ctx) =>{
             }, 500)
             
             //  Listening for data stream from spawned process
-            downloader.stderr.on('data', (data) => {
+            currentProcess.stderr.on('data', (data) => {
                 console.error(chalk.red(`STD_ERROR: ${data.toString()}`));
             });
             
             //  Listening for errors 
-            downloader.on('error',(error) => {
+            currentProcess.on('error',(error) => {
                 console.log('eror',error);
             });
     
             //  Listening for end stream closing
-            downloader.on('close', async (code) => {
+            currentProcess.on('close', async (code) => {
                 clearInterval(tgInterval); //   Clearing interval so it stops sending messages
                 //⬇️ Clearing variables;
                 args = [];
                 bufferData = null;
-                downloader = null;
+                currentProcess = null;
                 isBeingExtracted = false;
                 info = '';
-                let artist, title;
+                currentProcess = null;
+                let performer, title;
                 
-                const formatedFileName = downloadedFile.slice(1).split(/\.mp3/gm)[0];
                 console.log(chalk.green(`child process exited with code ${code}`));
                 await ctx.telegram.editMessageText(from_id, message_id, null, "Downloaded ✅");
                 const fileSizeMB = Math.ceil(fs.statSync(downloadedFile).size/(Math.pow(1024,2)));
                 //Check if filesize is less than 50mb
                 if(fileSizeMB < 50 ){
-                    let sendingFileMessage = await ctx.telegram.sendMessage(from_id, "Sending file ⏳");
-                    //const unnecessaryRegex = /(\[.*\])/gm;
-                    //let trashFilenameMatch = formatedFileName.match(unnecessaryRegex);
-                    let splitted = formatedFileName.split('\\');
-                    let filenameFromSplitted = splitted[splitted.length-1];
-                    // return console.log(filenameFromSplitted);
-                    if(filenameFromSplitted.includes('-')){
-                        // It has official video
-                        [artist, title] = filenameFromSplitted.replace(/(\[.*\])/gm,'').split(/\s\-\s/gm);
+                    if(downloadedFile.includes('-')){
+                        let data = path.parse(downloadedFile).name.split('-');
+                        performer = data[0];
+                        title = data[1];
+                        performer = performer.trim();
+                        title = title.trim().replace(UNWANTED_CHARACTERS_IN_FILENAME_REGEX_1, '').replace(UNWANTED_CHARACTERS_IN_FILENAME_REGEX_2, '');
                     } else {
-                        // It does not have it
-                        artist = "Untitled Artist"
-                        title = filenameFromSplitted
-                        //[artist, title] = formatedFileName.trim().split(/\s\-\s/gm);
+                        title = 'Unknown title'
+                        performer = 'Unknown artist'
                     }
-                    title = title.trim();
-                    artist = artist.trim();
-                    //  ffmpeg copy to add metadata
-                    const metadataArgs = [['-i'],[downloadedFile],['-metadata'],[`title=${title}`],['-metadata'],[`artist=${artist}`],[path.resolve(fullPath,`mp3/${artist}-${title}_enc.mp3`)]];
-
-                    const metadataEncoder = spawn('ffmpeg', metadataArgs);
-                    
-                    metadataEncoder.stdout.on('data', (data) => {
-                        bufferData = data.toString();
-                        console.log('MetaData Encoder stdout data: ',bufferData);
+                    let sendingFileMessage = await ctx.telegram.sendMessage(from_id, "Sending file ⏳");
+                    await ctx.telegram.sendAudio(from_id, { source: fs.readFileSync(path.resolve(fullPath,downloadedFile))}, {
+                        title,
+                        performer
                     });
-                    
-                    metadataEncoder.stderr.on('data', (data) => {
-                        console.error(`MetaData Encoder stderr Data: ${chalk.bgBlack.yellow(data.toString())}`);
-                    });
-
-                    metadataEncoder.stderr.on('error', (data) => {
-                        console.error(`MetaData Encoder stderr Error: ${chalk.red(data.toString())}`);
-                    });
-                    
-                    //  Listening for errors 
-                    metadataEncoder.on('error',(error) => {
-                        console.log(chalk.bgWhite('MetaData Encoder Error'), chalk.red(error));
-                    });
-                    
-                    metadataEncoder.on('close', async (code) => {
-                        console.log(chalk.green(`child process exited with code ${code}`));
-                        fs.renameSync(path.resolve(fullPath,`mp3/${artist}-${title}_enc.mp3`), path.resolve(fullPath,`mp3/${artist}-${title}.mp3`))
-                        await ctx.telegram.sendAudio(from_id, { source: fs.readFileSync(path.resolve(fullPath,`mp3/${artist}-${title}.mp3`))}, {
-                            title,
-                            performer: artist
-                        });
-                        await ctx.telegram.editMessageText(sendingFileMessage.chat.id, sendingFileMessage.message_id, null, 'File sent ✅')
-                        fs.unlinkSync(path.resolve(fullPath, `mp3/${artist}-${title}.mp3`));
-                    });
+                    await ctx.telegram.editMessageText(sendingFileMessage.chat.id, sendingFileMessage.message_id, null, 'File sent ✅')
                 } else {
                     // TODO: Sent links on the server to download, instead of sending file 
                     await ctx.reply(`File is too big: ${fileSizeMB}MB\nUnable to send 🚫`);
@@ -293,24 +266,24 @@ bot.hears('Check for the updates 🔄', async (ctx) => {
     
         args.push(['--version']);
     
-        downloader = spawn('yt-dlp',args);
+        currentProcess = spawn('yt-dlp',args);
         
-        downloader.stdout.on('data', (data) => {
+        currentProcess.stdout.on('data', (data) => {
             currentVersion = data.toString();
         });
         
-        downloader.stderr.on('data', (data) => {
+        currentProcess.stderr.on('data', (data) => {
             console.error(`stderr: ${data.toString()}`);
         });
         
-        downloader.on('error',(error) => {
+        currentProcess.on('error',(error) => {
             console.log(error);
         });
     
-        downloader.on('close', async (code) => {
+        currentProcess.on('close', async (code) => {
             currentVersion = currentVersion.trim();
             args = [];
-            downloader = null;
+            currentProcess = null;
             //  Getting latest available version tag from GitHub
             const latestVersion = await getLatestVersion();
             console.log(chalk.yellow(`child process exited with code ${code}`));
@@ -351,6 +324,10 @@ bot.hears('Check for the updates 🔄', async (ctx) => {
 
 bot.hears(/video (.+)/, async (ctx) => {
     if(ctx.update.message.from.id == process.env.ME || ctx.update.message.chat.id == process.env.ME){
+        if(currentProcess && currentProcess.pid){
+            //There is a process running, TODO: add message to queue;
+            return await ctx.reply('Please wait for your queue!');
+        }
         const messageText = ctx.match[1];
         await ctx.telegram.sendMessage(ctx.update.message.from.id, 'Started.');
         await ctx.reply('Checking available formats ⏳');
@@ -361,21 +338,21 @@ bot.hears(/video (.+)/, async (ctx) => {
             args.push(['-F'],messageText);
             
             //  Checking available formats
-            const formatChecker = spawn('yt-dlp', args);
+            currentProcess = spawn('yt-dlp', args);
 
-            formatChecker.stdout.on('data', (data) => {
+            currentProcess.stdout.on('data', (data) => {
                 console.log(data.toString());
                 outputStr += data.toString();
             });
 
-            formatChecker.on('error',(error) => {
+            currentProcess.on('error',(error) => {
                 console.error(error);
             });
 
-            formatChecker.on('close', async (code) => {
+            currentProcess.on('close', async (code) => {
                 args = [];
                 info = '';
-                
+                currentProcess = null;
                 // Parsing results after checking available formats
                 formatOptions = getCurrentStreamOptions(outputStr);
                 
@@ -416,9 +393,9 @@ bot.hears(/video (.+)/, async (ctx) => {
                 let message_id = sentMessage.message_id;
                 let from_id = sentMessage.chat.id;
 
-                downloader = spawn('yt-dlp',args);
+                currentProcess = spawn('yt-dlp',args);
                 
-                downloader.stdout.on('data', (data) => {
+                currentProcess.stdout.on('data', (data) => {
                     bufferData = data.toString();
                     
                     if(bufferData.includes('Destination')){
@@ -427,7 +404,7 @@ bot.hears(/video (.+)/, async (ctx) => {
                     }
                     
                     if(bufferData.includes('Finished downloading playlist:')){
-                        downloader.kill('SIGTERM')
+                        currentProcess.kill('SIGTERM')
                     }
 
                     if(bufferData.includes("has already been downloaded")){
@@ -465,22 +442,22 @@ bot.hears(/video (.+)/, async (ctx) => {
                     
                 }, 500)
                 
-                downloader.stderr.on('data', (data) => {
+                currentProcess.stderr.on('data', (data) => {
                     error = data.toString();
                     console.error(chalk.red(`stderr: ${data.toString()}`));
                 });
                 
-                downloader.on('error',(error) => {
+                currentProcess.on('error',(error) => {
                     console.log(chalk.red(error));
                 });
             
-                downloader.on('close', async (code) => {
+                currentProcess.on('close', async (code) => {
                     console.log(chalk.yellow(`child process exited with code ${code}`));
                     // Clearing all variables
                     clearInterval(tgInterval);
                     args = [];
                     bufferData = null;
-                    downloader = null;
+                    currentProcess = null;
                     isPlaylist = false;
                     info = '';
                     if(error.length === 0){
@@ -515,9 +492,9 @@ bot.hears(/video (.+)/, async (ctx) => {
             let message_id = sentMessage.message_id;
             let from_id = sentMessage.chat.id;
             
-            downloader = spawn('yt-dlp', args);
+            currentProcess = spawn('yt-dlp', args);
             
-            downloader.stdout.on('data', (data) => {
+            currentProcess.stdout.on('data', (data) => {
                 bufferData = data.toString();
                 console.log(chalk.green(bufferData));
                 if(bufferData.includes("has already been downloaded")){
@@ -525,7 +502,7 @@ bot.hears(/video (.+)/, async (ctx) => {
                 }
             });
             
-            downloader.on('error',(error) => {
+            currentProcess.on('error',(error) => {
                 console.log(chalk.red(error));
             });
 
@@ -539,13 +516,13 @@ bot.hears(/video (.+)/, async (ctx) => {
                 }                
             }, 500)
         
-            downloader.stderr.on('data', (data) => {
+            currentProcess.stderr.on('data', (data) => {
                 data = data.toString();
                 error = data;
                 console.log(chalk.red(`stderrr => : ${data}`));
             });
             
-            downloader.on('error',(error) => {
+            currentProcess.on('error',(error) => {
                 console.log(chalk.red(error));
             });
 
@@ -555,7 +532,7 @@ bot.hears(/video (.+)/, async (ctx) => {
                 clearInterval(tgInterval);
                 args = [];
                 bufferData = null;
-                downloader = null;
+                currentProcess = null;
                 info = '';
                 if(error.length === 0 || error.includes('WARNING')){
                     if(!hasAlreadyBeenDownloaded){
