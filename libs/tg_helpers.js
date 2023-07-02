@@ -1,31 +1,35 @@
 require('dotenv').config();
 
 const {
-    ID_AND_EXTENSION_REGEX
+    ID_AND_EXTENSION_REGEX,
+    TITLE_REGEX,
 } = require('../constants');
 
 
 const generateMessagePlaylist = (progress, info, matches, options) => {
-    return `${info}\n\n${(info.includes('playlist') ? 'Playlist' : 'Channel')} progress: ${progress}\n\n⚙️   Current track: ${options[2].includes("audio") ? "Audio 🎵" : "Video 📹 ("+options[2]+")"}\n💾   File size:    ${matches[2]}\n⏳   Progress:    ${matches[1]}\n🚄   Speed:       ${matches[4]}\n⏱   Time left:   ${matches[6]}\n`;
+    return `${info}\n\n${(info.includes('playlist') ? 'Playlist' : 'Channel')} progress: ${progress}\n\n⚙️   Current track: ${options[2].includes("audio") ? "Audio 🎵" : "Video 📹 ("+options[2]+")"}\n💾   File size:    ${matches[2]}\n⏳   Progress:    ${matches[1]}%\n🚄   Speed:       ${matches[4]}\n⏱   Time left:   ${matches[6]}\n`;
 }
 
 const generateOutputMessage = (is_video, info, matches, options) => {
     if(is_video && options){
-        return `${info}\n\n⚙️   Current track: ${options[2].includes("audio") ? "Audio 🎵" : "Video 📹 ("+options[2]+")"}\n💾   File size:    ${matches[2]}\n⏳   Progress:    ${matches[1]}\n🚄   Speed:       ${matches[4]}\n⏱   Time left:   ${matches[6]}\n`;
+        return `${info}\n\n⚙️   Current track: ${"Video 📹 ("+options[2]+")"}\n💾   File size:    ${matches[2]}\n⏳   Progress:    ${matches[1]}%\n🚄   Speed:       ${matches[3]}\n⏱   Time left:   ${matches[4]}\n`;
     } else {
-        return `${info}\n\n💾   File size:    ${matches[2]}\n⏳   Progress:    ${matches[1]}\n🚄   Speed:       ${matches[4]}\n⏱   Time left:   ${matches[6]}\n`;        
+        return `${info}\n\n💾   File size:    ${matches[2]}\n⏳   Progress:    ${matches[1]}%\n🚄   Speed:       ${matches[3]}\n⏱   Time left:   ${matches[4]}\n`;        
     }
 };
 
 const getCurrentStreamOptions = (outputString) => {
     const options = [];
     let outputMatches = outputString.match(ID_AND_EXTENSION_REGEX);
-
     outputMatches.map((match) => {
         options.push(match.split(' ').filter(Boolean))
     });
 
     return options;
+}
+
+const getVideoTitle = (outputString) => {
+    return outputString.match(TITLE_REGEX)[0].trim();    
 }
 
 const generateDefaultPaginationKeyboard = async ([ctx, Markup, chat_id, message_id, text], [progress, current_page, per_page, total]) => {
@@ -42,3 +46,4 @@ module.exports.generateOutputMessage = generateOutputMessage
 module.exports.getCurrentStreamOptions = getCurrentStreamOptions
 module.exports.generateMessagePlaylist = generateMessagePlaylist;
 module.exports.generateDefaultPaginationKeyboard = generateDefaultPaginationKeyboard;
+module.exports.getVideoTitle = getVideoTitle;
