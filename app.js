@@ -33,7 +33,8 @@ const {
     getCurrentStreamOptions, 
     generateOutputMessage, 
     generateDefaultPaginationKeyboard,
-    generateMessagePlaylist
+    generateMessagePlaylist, 
+    getVideoTitle
 } = require('./libs/tg_helpers');
 
 const { getCurrentTime } = require('./libs/get_time');
@@ -320,8 +321,6 @@ bot.hears('Check for the updates 🔄', async (ctx) => {
     }
 });
 
-
-
 bot.hears(/video (.+)/, async (ctx) => {
     if(ctx.update.message.from.id == process.env.ME || ctx.update.message.chat.id == process.env.ME){
         if(currentProcess && currentProcess.pid){
@@ -335,7 +334,7 @@ bot.hears(/video (.+)/, async (ctx) => {
         
         if(foundMatches != null) {
             let outputStr = '';
-            args.push(['-F'],messageText);
+            args.push(['-F'],['--get-title'],messageText);
             
             //  Checking available formats
             currentProcess = spawn('yt-dlp', args);
@@ -355,7 +354,8 @@ bot.hears(/video (.+)/, async (ctx) => {
                 currentProcess = null;
                 // Parsing results after checking available formats
                 formatOptions = getCurrentStreamOptions(outputStr);
-                
+                let videoTitle = getVideoTitle(outputStr);
+
                 // Start downloading            
                 args.push(['--add-header'], ['Cookie:COOKIE_STRING_EXTRACTED_FROM_BROWSER'], messageText);
                 args.push([`-P ${fullPath}`]);
@@ -385,7 +385,8 @@ bot.hears(/video (.+)/, async (ctx) => {
                 
                 // Checking if it's just a single video link
                 if(messageText.includes('watch?') || messageText.includes('youtu.be')){
-                    info = `ℹ️   Downloading single Youtube video\n`;
+                    info += `Downloading single Youtube video\n\n`;
+                    info += `ℹ️  ${videoTitle}\n`;
                     args.push([`-o`],[`Youtube Video/%(title)s.%(ext)s`]);
                 }
                 //return console.log(args);
@@ -460,6 +461,7 @@ bot.hears(/video (.+)/, async (ctx) => {
                     currentProcess = null;
                     isPlaylist = false;
                     info = '';
+                    videoTitle = '';
                     if(error.length === 0){
                         await ctx.telegram.editMessageText(from_id, message_id, null, `Downloaded! ✅`);
                     } else {
