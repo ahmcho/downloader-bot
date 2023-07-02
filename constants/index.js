@@ -3,7 +3,7 @@
  */
 const YOUTUBE_URL_REGEX = /^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$/gm;
 //  ⬆️ detect all possible youtube links
-const PROGRESS_REGEX = /\[download\] *(.*) of ([^ ]*)(:? *at *([^ ]*))?(:? *ETA *([^ ]*))?/gm;
+const PROGRESS_REGEX = /\[download\]\s+([\d\.]+)% of\s+([\d\.]+[A-Za-z]*) at\s+([\d\.]+[A-Za-z/]*) ETA (\d{2}:\d{2})/gm;
 //  ⬆️ parse yt-dlp progress string
 const FORMAT_REGEX = /f\d+/gm;
 //  ⬆️ extract current track id
@@ -18,8 +18,8 @@ const MARKDOWN_LIST_ITEM_REGEX = /\*\*(.*)\*\*/gmi;
 const DOMAIN_EXTRACTOR_REGEX = /^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n?]+)/gim;
 //  ⬆️ extract domain from the link
 const UNWANTED_CHARACTERS_IN_FILENAME_REGEX_1 = / *(\([^)]*\))|(\[[^)]*\]) */g;
-const  UNWANTED_CHARACTERS_IN_FILENAME_REGEX_2= /(\[).*(\])?/g;
-
+const UNWANTED_CHARACTERS_IN_FILENAME_REGEX_2= /(\[).*(\])?/g;
+const TITLE_REGEX = /\n(.*)\n$/gm;
 
 const PER_PAGE = 30;
 const YT_DLP_GITHUB_RELEASE_URL = "https://api.github.com/repos/yt-dlp/yt-dlp/releases";
@@ -39,6 +39,7 @@ module.exports = {
     PAGE_URL_REGEX,
     PLAYLIST_PROGRESS_REGEX,
     DOMAIN_EXTRACTOR_REGEX,
+    TITLE_REGEX,
     UNWANTED_CHARACTERS_IN_FILENAME_REGEX_1,
     UNWANTED_CHARACTERS_IN_FILENAME_REGEX_2
 };
