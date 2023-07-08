@@ -95,6 +95,19 @@ const generateDefaultPaginationKeyboard = async ([ctx, Markup, chat_id, message_
     ])});
 }
 
+/**
+ * Builds a string of supported websites 
+ * 
+ * @param {array} arrayOfWebsites Array of websites 
+ * @returns string
+ */
+const buildPaginatedSiteList = (arrayOfWebsites) => {
+    let finalMessage = '';
+    arrayOfWebsites.map((website) => {
+        finalMessage += `• <code>${website}</code>\n`;
+    });
+    return finalMessage;
+}
 
 
 module.exports.generateOutputMessage = generateOutputMessage
@@ -102,3 +115,4 @@ module.exports.getCurrentStreamOptions = getCurrentStreamOptions
 module.exports.generateMessagePlaylist = generateMessagePlaylist;
 module.exports.generateDefaultPaginationKeyboard = generateDefaultPaginationKeyboard;
 module.exports.getVideoTitle = getVideoTitle;
+module.exports.buildPaginatedSiteList = buildPaginatedSiteList;

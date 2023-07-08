@@ -28,14 +28,13 @@ const {
 const { PER_PAGE } = require('./constants');
 
 const {
+    buildPaginatedSiteList,
     getCurrentStreamOptions,
     generateOutputMessage,
     generateMessagePlaylist,
     generateDefaultPaginationKeyboard,
     getVideoTitle
 } = require('./libs/tg_helpers');
-
-const { buildPaginatedSiteList } = require('./libs/list_builder');
 
 const { getSupportedWebsites, getLatestVersion, getDownloadLink } = require('./libs/github_helpers');
 
