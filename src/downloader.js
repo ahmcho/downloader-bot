@@ -12,20 +12,18 @@ const axios = require('axios');
 const iconv = require('iconv-lite');
 const { Markup } = require('telegraf');
 
-
 const {
     YOUTUBE_URL_REGEX,
     PROGRESS_REGEX,
     PROGRESS_REGEX_NOT_YOUTUBE,
     PAGE_URL_REGEX,
+    PER_PAGE,
     FORMAT_REGEX,
     DOMAIN_EXTRACTOR_REGEX,
     PLAYLIST_PROGRESS_REGEX,
     UNWANTED_CHARACTERS_IN_FILENAME_REGEX_1,
     UNWANTED_CHARACTERS_IN_FILENAME_REGEX_2
 } = require('./constants');
-
-const { PER_PAGE } = require('./constants');
 
 const {
     buildPaginatedSiteList,
@@ -43,7 +41,6 @@ const {
     getBinaryName,
     paginate
 } = require('./libs/general_helpers');
-
 
 /**
  * Generate full path from environment variable
