@@ -109,7 +109,6 @@ const buildPaginatedSiteList = (arrayOfWebsites) => {
     return finalMessage;
 }
 
-
 module.exports.generateOutputMessage = generateOutputMessage
 module.exports.getCurrentStreamOptions = getCurrentStreamOptions
 module.exports.generateMessagePlaylist = generateMessagePlaylist;

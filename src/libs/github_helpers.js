@@ -1,5 +1,5 @@
 const axios = require('axios');
-const { getBinaryName } = require('./get_binary');
+const { getBinaryName } = require('./general_helpers');
 const {
     YT_DLP_GITHUB_RELEASE_URL,
     YT_DLP_GITHUB_DOWNLOAD_URL,

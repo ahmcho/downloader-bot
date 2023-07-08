@@ -38,11 +38,11 @@ const {
 
 const { getSupportedWebsites, getLatestVersion, getDownloadLink } = require('./libs/github_helpers');
 
-const { getCurrentTime } = require('./libs/get_time');
-
-const { getBinaryName } = require('./libs/get_binary');
-
-const { paginate } = require('./libs/paginate');
+const { 
+    getCurrentTime,
+    getBinaryName,
+    paginate
+} = require('./libs/general_helpers');
 
 
 /**
