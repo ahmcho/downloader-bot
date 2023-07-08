@@ -5,6 +5,7 @@ const {
 } = require('child_process');
 
 const fs = require('fs');
+const readline = require('readline');
 const path = require('path');
 const chalk = require('chalk');
 const axios = require('axios');
@@ -24,9 +25,7 @@ const {
     UNWANTED_CHARACTERS_IN_FILENAME_REGEX_2
 } = require('./constants');
 
-const {
-    PER_PAGE,
-} = require('./constants');
+const { PER_PAGE } = require('./constants');
 
 const {
     getCurrentStreamOptions,
@@ -36,24 +35,16 @@ const {
     getVideoTitle
 } = require('./libs/tg_helpers');
 
-const {
-    buildPaginatedSiteList
-} = require('./libs/list_builder');
+const { buildPaginatedSiteList } = require('./libs/list_builder');
 
-const {
-    getSupportedWebsites,
-    getLatestVersion,
-    getDownloadLink
-} = require('./libs/github_helpers');
+const { getSupportedWebsites, getLatestVersion, getDownloadLink } = require('./libs/github_helpers');
 
-const {
-    getCurrentTime
-} = require('./libs/get_time');
+const { getCurrentTime } = require('./libs/get_time');
 
+const { getBinaryName } = require('./libs/get_binary');
 
-const {
-    paginate
-} = require('./libs/paginate');
+const { paginate } = require('./libs/paginate');
+
 
 /**
  * Generate full path from environment variable
@@ -83,6 +74,40 @@ class Downloader {
     }
 
     /**
+     * Netscape cookie file validator
+     * 
+     * @param {string} filePath
+     */
+    async validateCookieFile (filePath) 
+    {
+        const fileStream = fs.createReadStream(filePath);
+        
+        const lines = readline.createInterface({
+            input: fileStream,
+            crlfDelay: Infinity
+        });
+
+        for await (const line of lines) {
+            // ignore comments and empty lines
+            if (!line || line.startsWith('#')) continue;
+
+            const fields = line.split('\t');
+            
+            // check if there are 7 fields
+            if (fields.length !== 7) return false;
+            
+            // check if flag and secure fields are TRUE or FALSE
+            if (!['TRUE', 'FALSE'].includes(fields[1])) return false;
+            if (!['TRUE', 'FALSE'].includes(fields[3])) return false;
+            
+            // check if expiration field is a digit
+            if (!/^\d+$/.test(fields[4])) return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Generic callback parser
      * 
      * @param {Context} ctx Telegram Update object
@@ -103,7 +128,7 @@ class Downloader {
         this.list = await getSupportedWebsites();
         
         //  Creating pagination
-        let paginatedList = paginate(list, PER_PAGE, currentPage);
+        let paginatedList = paginate(this.list, PER_PAGE, currentPage);
         //  Generating message text, based on paginated list
         let messageText = buildPaginatedSiteList(paginatedList);
         
@@ -136,7 +161,7 @@ class Downloader {
                 ctx.answerCbQuery(`Last page`);            
                 await ctx.telegram.editMessageText(chatId, messageId, null, messageText, { parse_mode: 'HTML',...Markup.inlineKeyboard([
                     Markup.button.callback('⬅️', `goto?page=prev&currentPage=${currentPage-1}&perpage=${PER_PAGE}&total=${total}`),
-                    Markup.button.callback(progress, `goto?page=start&currentPage=${currentPage}&perpage=${PER_PAGE}&total=${list.length}`),
+                    Markup.button.callback(progress, `goto?page=start&currentPage=${currentPage}&perpage=${PER_PAGE}&total=${this.list.length}`),
                 ])});
             }
         }
@@ -147,7 +172,7 @@ class Downloader {
             {
                 ctx.answerCbQuery(`First page`);            
                 await ctx.telegram.editMessageText(chatId, messageId, null, messageText, { parse_mode: 'HTML',...Markup.inlineKeyboard([
-                    Markup.button.callback(progress, `goto?page=start&currentPage=${currentPage}&perpage=${PER_PAGE}&total=${list.length}`),
+                    Markup.button.callback(progress, `goto?page=start&currentPage=${currentPage}&perpage=${PER_PAGE}&total=${this.list.length}`),
                     Markup.button.callback('➡️',`goto?page=next&currentPage=${currentPage+1}&perpage=${PER_PAGE}&total=${total}`)
                 ])});
             } 
@@ -167,13 +192,13 @@ class Downloader {
      */
     async handleStart(ctx)
     {
-        await ctx.reply(`Hello, ${ctx.update.message.from.username}`, Markup
-                                                                        .keyboard([
-                                                                            ['Check for the updates 🔄'],
-                                                                            ['Check supported websites 🌍'],
-                                                                            ['F.A.Q ℹ️']
-                                                                        ])
-                                                                        .resize());
+        const helloMessage = `Hello, ${ctx.update.message.from.username}`;
+        await ctx.reply(helloMessage, Markup.keyboard([
+                                            ['Check for the updates 🔄'],
+                                            ['Check supported websites 🌍'],
+                                            ['F.A.Q ℹ️']
+                                        ])
+                                        .resize());
         this.list = await getSupportedWebsites();
     }
     
@@ -185,19 +210,22 @@ class Downloader {
      */
     async handleSupportedWebsites(ctx) 
     {
-        let currentPage = 1;
+        const currentPage = 1;
         this.list = await getSupportedWebsites();
-        let total = Math.ceil(list.length / PER_PAGE);
-        let progress = `${currentPage}/${total}`;
-        await ctx.reply(`Total supported websites: ${list.length}`);
-        let paginatedList = paginate(list, PER_PAGE, currentPage);
-        let messageText = buildPaginatedSiteList(paginatedList);
+        const total = Math.ceil(this.list.length / PER_PAGE);
+        const progress = `${currentPage}/${total}`;
+        await ctx.reply(`Total supported websites: ${this.list.length}`);
+        const paginatedList = paginate(this.list, PER_PAGE, currentPage);
+        const messageText = buildPaginatedSiteList(paginatedList);
+
+        const startPage = `goto?page=start&currentPage=${currentPage}&perpage=${PER_PAGE}&total=${this.list.length}`;
+        const nextPage = `goto?page=next&currentPage=${currentPage+1}&perpage=${PER_PAGE}&total=${this.list.length}`;
     
         await ctx.reply(messageText, {
             parse_mode: 'HTML',
             ...Markup.inlineKeyboard([
-                Markup.button.callback(progress, `goto?page=start&currentPage=${currentPage}&perpage=${PER_PAGE}&total=${list.length}`),
-                Markup.button.callback('➡️', `goto?page=next&currentPage=${currentPage+1}&perpage=${PER_PAGE}&total=${list.length}`)
+                Markup.button.callback(progress, startPage),
+                Markup.button.callback('➡️', nextPage)
             ])
         });
     }
@@ -212,12 +240,14 @@ class Downloader {
     {
         //  Checking if we have the latest yt-dlp binary
         let currentVersion;
-        let sentMessage = await ctx.reply('Checking ⏳');
+        const sentMessage = await ctx.reply('Checking ⏳');
+        
+        const message_id = sentMessage.message_id;
         const from_id = sentMessage.chat.id;
     
         this.args.push(['--version']);
     
-        this.currentProcess = spawn('yt-dlp',args);
+        this.currentProcess = spawn('yt-dlp',this.args);
         
         this.currentProcess.stdout.on('data', (data) => {
             currentVersion = data.toString();
@@ -243,17 +273,17 @@ class Downloader {
     
             if(latestVersion != currentVersion)
             {
-                ctx.telegram.sendMessage(from_id, "There is an update available 🔄");
-                ctx.telegram.sendMessage(from_id, "Updating ⏳")
+                await ctx.telegram.editMessageText(from_id, message_id, null, "There is an update available 🔄");
+                await ctx.telegram.editMessageText(from_id, message_id, null, "Updating ⏳");
                 
                 //  Downloading latest binary
-                this.downloadFileFromStream(await getDownloadLink(), getBinaryName(), function(){
-                    ctx.telegram.sendMessage(from_id,'App has been updated! ✅')
+                this.downloadFileFromStream(await getDownloadLink(), getBinaryName(), async function(){
+                    await ctx.telegram.editMessageText(from_id, message_id, null, 'App has been updated! ✅');
                 });                
             }
             else 
             {
-                ctx.telegram.sendMessage(from_id, "Your app is up to date! ✅");
+                await ctx.telegram.editMessageText(from_id, message_id, null, "Your app is up to date! ✅");
             }
         });
     }
@@ -314,18 +344,20 @@ class Downloader {
         const link = `https://api.telegram.org/file/bot${process.env.BOT_TOKEN}/${filePath}`;
         
         //Save file and read its contents
-        this.downloadFileFromStream(link, './cookies.txt', async function () {
+        this.downloadFileFromStream(link, './cookies.txt', async () => {
             try {
-                const contents = fs.readFileSync('./cookies.txt', 'utf8');
     
                 //Check if it is a valid cookie
-                if (contents.includes("# Netscape HTTP Cookie File")) {
+                const isValid = await this.validateCookieFile('./cookies.txt');
+
+                if (isValid) {
                     return await ctx.reply('Valid cookie was provided ✅');
                 }
     
                 // Invalid cookie was provided, delete the file
                 await ctx.reply('Valid cookie was provided ❌');
-                fs.rmSync('./cookies.txt');
+
+                fs.rmSync('./cookies.txt');                
             } catch (error) {
                 console.log('Something happened: ', error);
             }
@@ -357,8 +389,8 @@ class Downloader {
             console.log(chalk.white.bgRed(err))
         })
         
-        binaryStream.on('close', function(){
-            callback();
+        binaryStream.on('close', async function(){
+            await callback();
         });
     }
     
@@ -401,11 +433,11 @@ class Downloader {
      */
     async processAudio ( ctx ) {
         const messageText = ctx.match[1];
-        let foundMatches = messageText.match(YOUTUBE_URL_REGEX);
+        const foundMatches = messageText.match(YOUTUBE_URL_REGEX);
     
         if (foundMatches != null) {
             //Saving message to for using it's id in the future.
-            let sentMessage = await ctx.reply('Downloading...'); 
+            const sentMessage = await ctx.reply('Downloading...'); 
             const message_id = sentMessage.message_id;
             const from_id = sentMessage.chat.id;
             
@@ -490,6 +522,7 @@ class Downloader {
                         title,
                         performer
                     });
+                    
                     await ctx.telegram.editMessageText(sendingFileMessage.chat.id, sendingFileMessage.message_id, null, 'File sent ✅')
                 } else {
                     // TODO: Sent links on the server to download, instead of sending file 
@@ -514,7 +547,7 @@ class Downloader {
     
         await ctx.reply('Checking available formats ⏳');
     
-        let foundMatches = messageText.match(YOUTUBE_URL_REGEX);
+        const foundMatches = messageText.match(YOUTUBE_URL_REGEX);
     
         if (foundMatches != null) {
             let outputStr = '';
@@ -539,7 +572,7 @@ class Downloader {
     
                 // Parsing results after checking available formats
                 this.formatOptions = getCurrentStreamOptions(outputStr);
-                let videoTitle = getVideoTitle(outputStr);
+                const videoTitle = await getVideoTitle(outputStr);
     
                 // Start downloading          
                 this.args.push(['--add-header'], ['Cookie:COOKIE_STRING_EXTRACTED_FROM_BROWSER'], messageText);
@@ -576,9 +609,9 @@ class Downloader {
                     this.args.push([`-o`], [`Youtube Video/%(title)s.%(ext)s`]);        
                 }
     
-                let sentMessage = await ctx.reply('Downloading...');
-                let message_id = sentMessage.message_id;
-                let from_id = sentMessage.chat.id;
+                const sentMessage = await ctx.reply('Downloading...');
+                const message_id = sentMessage.message_id;
+                const from_id = sentMessage.chat.id;
     
                 this.currentProcess = spawn('yt-dlp', this.args);
     
@@ -611,12 +644,12 @@ class Downloader {
                 });
     
                 let tgInterval = setInterval(() => {
-                    let progressMatches = PROGRESS_REGEX.exec(this.bufferData);
+                    const progressMatches = PROGRESS_REGEX.exec(this.bufferData);
                     let message = '';
                     if (this.format != '') 
                     {
                         //  Iterating over parsed format options to find our current format
-                        let foundFormatData = this.formatOptions.find((item) => item[0] == this.format);
+                        const foundFormatData = this.formatOptions.find((item) => item[0] == this.format);
     
                         if (progressMatches) 
                         {
@@ -627,7 +660,7 @@ class Downloader {
                             }
     
                             //  You can change the date for your needs, I had to add +4 hrs to correctly display Azerbaijan time
-                            let [currentDate, currentTime] = getCurrentTime();
+                            const [currentDate, currentTime] = getCurrentTime();
                             ctx.telegram.editMessageText(from_id, message_id, null, `${message} \n🕐   Current time: ${currentDate} ${currentTime}`);
                         }
                     }
@@ -698,9 +731,9 @@ class Downloader {
             this.args.push(['-o'], ['%(extractor)s/%(title)s.%(ext)s']);
             this.args.push(messageText);
     
-            let sentMessage = await ctx.reply('Downloading...');
-            let message_id = sentMessage.message_id;
-            let from_id = sentMessage.chat.id;
+            const sentMessage = await ctx.reply('Downloading...');
+            const message_id = sentMessage.message_id;
+            const from_id = sentMessage.chat.id;
             
             if(!videoTitle){
                 videoTitle = await getVideoTitle(messageText);
@@ -723,12 +756,12 @@ class Downloader {
             });
     
             let tgInterval = setInterval(() => {
-                let progressMatches = PROGRESS_REGEX_NOT_YOUTUBE.exec(this.bufferData);
+                const progressMatches = PROGRESS_REGEX_NOT_YOUTUBE.exec(this.bufferData);
                 let message = '';
                 if (progressMatches) {
                     
                     message += generateOutputMessage(null, this.info, progressMatches, null);
-                    let [currentDate, currentTime] = getCurrentTime();
+                    const [currentDate, currentTime] = getCurrentTime();
                     ctx.telegram.editMessageText(from_id, message_id, null, `${message} \n🕐   Current time: ${currentDate} ${currentTime}`);
                 }
             }, 500)
