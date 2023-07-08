@@ -13,7 +13,7 @@ const {
  * @param {String} info General information message
  * @param {Array} matches Array of items to parse progress information
  * @param {Array} options Current track
- * @returns string 
+ * @return string 
  */
 const generateMessagePlaylist = (progress, info, matches, options) => {
     return `${info}\n\n${(info.includes('playlist') ? 'Playlist' : 'Channel')} progress: ${progress}\n\n⚙️   Current track: ${options[2].includes("audio") ? "Audio 🎵" : "Video 📹 ("+options[2]+")"}\n💾   File size:    ${matches[2]}\n⏳   Progress:    ${matches[1]}%\n🚄   Speed:       ${matches[4]}\n⏱   Time left:   ${matches[6]}\n`;
@@ -26,7 +26,7 @@ const generateMessagePlaylist = (progress, info, matches, options) => {
  * @param {String} info General information message
  * @param {Array} matches Array of items to parse progress information
  * @param {Array} options Current track
- * @returns string
+ * @return string
  */
 const generateOutputMessage = (is_video, info, matches, options) => {
     if(is_video && options){
@@ -40,7 +40,7 @@ const generateOutputMessage = (is_video, info, matches, options) => {
  * Parses a table of available stream options from yt-dlp command
  * 
  * @param {string} outputString 
- * @returns array
+ * @return array
  */
 const getCurrentStreamOptions = (outputString) => {
     const options = [];
@@ -56,7 +56,7 @@ const getCurrentStreamOptions = (outputString) => {
  * Extracts the video title from yt-dlp command
  * 
  * @param {string} outputString 
- * @returns Promise
+ * @return Promise
  */
 const getVideoTitle = async (outputString) => {
     let title;
@@ -85,7 +85,7 @@ const getVideoTitle = async (outputString) => {
  * 
  * @param {array} telegramOptions Options for Telegram
  * @param {array} paginationOptions Options for pagination 
- * @returns Promise
+ * @return Promise
  */
 const generateDefaultPaginationKeyboard = async ([ctx, Markup, chat_id, message_id, text], [progress, current_page, per_page, total]) => {
     return ctx.telegram.editMessageText(chat_id, message_id,null,text,{ parse_mode: 'HTML',...Markup.inlineKeyboard([
@@ -99,7 +99,7 @@ const generateDefaultPaginationKeyboard = async ([ctx, Markup, chat_id, message_
  * Builds a string of supported websites 
  * 
  * @param {array} arrayOfWebsites Array of websites 
- * @returns string
+ * @return string
  */
 const buildPaginatedSiteList = (arrayOfWebsites) => {
     let finalMessage = '';

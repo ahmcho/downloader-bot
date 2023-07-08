@@ -3,7 +3,7 @@ const process = require('process');
 /**
  * Returns binary name based on current platform
  * 
- * @returns string
+ * @return string
  */
 const getBinaryName = () => {
     switch(process.platform){
@@ -19,7 +19,7 @@ const getBinaryName = () => {
 /**
  * Parses current timestamp
  * 
- * @returns string
+ * @return string
  */
 const getCurrentTime = () => {
     return new Date(((new Date()).setHours((new Date().getHours() + 4)))).toISOString().split('T');
