@@ -11,11 +11,12 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 const downloader = new Downloader();
 
 bot.use(async (ctx, next) => {
+    const context = ctx.update.message ? ctx.update.message : ctx.update.callback_query.message;
     // Failsafe to prevent others from using this bot, otherwise everyone will be send links for downloading to YOUR computer.
     if (
-        ctx.update.message.from.id == process.env.ME 
+        context.from.id == process.env.ME 
         || 
-        ctx.update.message.chat.id == process.env.ME
+        context.chat.id == process.env.ME
     )
     {
         await next();
