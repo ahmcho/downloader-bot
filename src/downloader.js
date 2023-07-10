@@ -55,18 +55,18 @@ class Downloader {
         this.args = [];
         this.formatOptions = null;
         this.bufferData = null;
-        this.format = '';
         this.downloader = null;
         this.info = null;
         this.list = null;
+        this.playlistProgress = null;
+        this.currentProcess = null;
+        this.format = '';
+        this.error = '';
+        this.downloadedFile = '';
         this.hasAlreadyBeenDownloaded = false;
         this.isBeingExtracted = false;
         this.isPlaylist = false;
         this.isChannel = false;
-        this.playlistProgress = null;
-        this.downloadedFile = '';
-        this.error = '';
-        this.currentProcess = null;
     }
 
     /**
