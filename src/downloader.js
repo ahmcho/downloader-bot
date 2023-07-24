@@ -44,10 +44,14 @@ const {
 
 /**
  * Generate full path from environment variable
- * @param  DEFAULT_DOWNLOAD_LOCATION  Default download location, provided inside environment variable
  */
 const fullPath = path.resolve(process.env.DEFAULT_DOWNLOAD_LOCATION);
 
+/**
+ * Downloader class constructor
+ * 
+ * @class
+ */
 class Downloader {
     constructor()
     {
@@ -72,7 +76,10 @@ class Downloader {
     /**
      * Netscape cookie file validator
      * 
+     * @async
      * @param {string} filePath
+     * @returns {boolean} True, if cookie is valid, false otherwise.
+     * 
      */
     async validateCookieFile (filePath) 
     {
@@ -106,8 +113,8 @@ class Downloader {
     /**
      * Generic callback parser
      * 
+     * @async
      * @param {Context} ctx Telegram Update object
-     * @return void
      */
     async handleAction (ctx) 
     {        
@@ -183,8 +190,8 @@ class Downloader {
     /**
      * Function that runs each time "/start" button pressed
      * 
+     * @async
      * @param {Context} ctx Telegram Update object
-     * @return void
      */
     async handleStart(ctx)
     {
@@ -201,8 +208,8 @@ class Downloader {
     /**
      * Sends the list of supported websites
      * 
+     * @async
      * @param {Context} ctx Telegram Update object
-     * @return void
      */
     async handleSupportedWebsites(ctx) 
     {
@@ -229,8 +236,8 @@ class Downloader {
     /**
      * Handles update to latest version
      * 
+     * @async
      * @param {Context} ctx Telegram Update object
-     * @return void
      */
     async handleUpdate (ctx) 
     {
@@ -287,8 +294,8 @@ class Downloader {
     /**
      * Sends an .mp3 version of the video that was request to download 
      * 
+     * @async
      * @param {Context} ctx Telegram Update object 
-     * @return void
      */
     async handleAudio (ctx) 
     {
@@ -307,8 +314,8 @@ class Downloader {
     /**
      * Downloads the requested video 
      * 
+     * @async
      * @param {Context} ctx Telegram Update object 
-     * @return void
      */
     async handleVideo (ctx) 
     {
@@ -327,8 +334,8 @@ class Downloader {
     /**
      * Checks cookie file ( if was provided ) for validity
      * 
+     * @async
      * @param {Context} ctx Telegram Update object
-     * @return void
      */
     async handleDocument (ctx)
     {
@@ -363,12 +370,12 @@ class Downloader {
     /**
      * File download function
      * 
-     * @param {String} url URL to download
-     * @param {String} fileName Filename for saving
-     * @param {Function} callback Callback function to be run when file is downloaded
-     * @return void
+     * @async
+     * @param {string} url URL to download
+     * @param {string} fileName Filename for saving
+     * @param {function} cb Function to be run when file is downloaded
      */
-    async downloadFileFromStream (url, fileName, callback)
+    async downloadFileFromStream (url, fileName, cb)
     {
         const downloadResponse = await axios({
             method: "get",
@@ -386,16 +393,16 @@ class Downloader {
         })
         
         binaryStream.on('close', async function(){
-            await callback();
+            await cb();
         });
     }
     
     /**
      * Queue processing function
      * 
+     * @async
      * @param {Context} ctx Telegram Update Object
-     * @param {String} type Type of a file that has been requested
-     * @return void
+     * @param {string} type Type of a file that has been requested
      */
     async processQueue (ctx, type)
     {
@@ -425,6 +432,7 @@ class Downloader {
     /**
      * Processes and sends the audio (if possible) to the user
      * 
+     * @async
      * @param {Context} ctx Telegram Update Object
      */
     async processAudio ( ctx ) {
@@ -534,6 +542,7 @@ class Downloader {
     /**
      * Processes and sends the video (if possible) to the user
      * 
+     * @async
      * @param {Context} ctx Telegram Update Object
      */
     async processVideo (ctx)

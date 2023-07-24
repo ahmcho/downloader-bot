@@ -10,7 +10,7 @@ const {
 /**
  * Extracts the latest version of yt-dlp library
  * 
- * @return string
+ * @returns string
  */
 const getLatestVersion = async () => {
     const ghRequestResult = await axios.get(YT_DLP_GITHUB_RELEASE_URL);
@@ -20,7 +20,7 @@ const getLatestVersion = async () => {
 /**
  * Generates a download link for the binary
  * 
- * @return string
+ * @returns string
  */
 const getDownloadLink = async () => {
     const latestVersion = await getLatestVersion();
@@ -31,7 +31,7 @@ const getDownloadLink = async () => {
 /**
  * Gets list of supported websites
  * 
- * @return array
+ * @returns array
  */
 const getSupportedWebsites = async () => {
     const {data} = await axios.get(YT_DLP_SUPPORTED_WEBSITES_MD);

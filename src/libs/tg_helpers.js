@@ -1,19 +1,15 @@
 require('dotenv').config();
-const {
-    spawn
-} = require('child_process');
-const {
-    ID_AND_EXTENSION_REGEX,
-} = require('../constants');
+const { spawn } = require('child_process');
+const { ID_AND_EXTENSION_REGEX } = require('../constants');
 
 /**
  * Returns current download progress for a playlist
  * 
- * @param {String} progress Playlist progress
- * @param {String} info General information message
- * @param {Array} matches Array of items to parse progress information
- * @param {Array} options Current track
- * @return string 
+ * @param {string} progress Playlist progress
+ * @param {string} info General information message
+ * @param {array} matches Array of items to parse progress information
+ * @param {array} options Current track
+ * @returns {string} Playlist/Channel download progress information 
  */
 const generateMessagePlaylist = (progress, info, matches, options) => {
     return `${info}\n\n${(info.includes('playlist') ? 'Playlist' : 'Channel')} progress: ${progress}\n\n⚙️   Current track: ${options[2].includes("audio") ? "Audio 🎵" : "Video 📹 ("+options[2]+")"}\n💾   File size:    ${matches[2]}\n⏳   Progress:    ${matches[1]}%\n🚄   Speed:       ${matches[4]}\n⏱   Time left:   ${matches[6]}\n`;
@@ -22,11 +18,11 @@ const generateMessagePlaylist = (progress, info, matches, options) => {
 /**
  * Generates a string with progress information
  * 
- * @param {Boolean} is_video Flag to check if current track is a video track
- * @param {String} info General information message
- * @param {Array} matches Array of items to parse progress information
- * @param {Array} options Current track
- * @return string
+ * @param {boolean} is_video Flag to check if current track is a video track
+ * @param {string} info General information message
+ * @param {array} matches Array of items to parse progress information
+ * @param {array} options Current track
+ * @returns {string} String with progress information
  */
 const generateOutputMessage = (is_video, info, matches, options) => {
     if(is_video && options){
@@ -40,7 +36,7 @@ const generateOutputMessage = (is_video, info, matches, options) => {
  * Parses a table of available stream options from yt-dlp command
  * 
  * @param {string} outputString 
- * @return array
+ * @returns {array} An array of available stream options
  */
 const getCurrentStreamOptions = (outputString) => {
     const options = [];
@@ -55,8 +51,9 @@ const getCurrentStreamOptions = (outputString) => {
 /**
  * Extracts the video title from yt-dlp command
  * 
+ * @async
  * @param {string} outputString 
- * @return Promise
+ * @returns {Promise} Promise that resolves to the title of a given video.
  */
 const getVideoTitle = async (outputString) => {
     let title;
@@ -83,9 +80,9 @@ const getVideoTitle = async (outputString) => {
 /**
  * Generates default pagination keyboard 
  * 
+ * @async
  * @param {array} telegramOptions Options for Telegram
  * @param {array} paginationOptions Options for pagination 
- * @return Promise
  */
 const generateDefaultPaginationKeyboard = async ([ctx, Markup, chat_id, message_id, text], [progress, current_page, per_page, total]) => {
     return ctx.telegram.editMessageText(chat_id, message_id,null,text,{ parse_mode: 'HTML',...Markup.inlineKeyboard([
@@ -99,7 +96,7 @@ const generateDefaultPaginationKeyboard = async ([ctx, Markup, chat_id, message_
  * Builds a string of supported websites 
  * 
  * @param {array} arrayOfWebsites Array of websites 
- * @return string
+ * @returns {string} String of supported websites encoded in HTML
  */
 const buildPaginatedSiteList = (arrayOfWebsites) => {
     let finalMessage = '';
