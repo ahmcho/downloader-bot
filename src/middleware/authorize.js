@@ -2,8 +2,8 @@
  * 
  * Authorize the request
  * 
- * @param {Context} ctx 
- * @param {Function} next 
+ * @param {Context} ctx Telegram Update object
+ * @param {function} next Function to execute next
  */
 const authorize = async (ctx, next) => {
     const context = ctx.update.message ? ctx.update.message : ctx.update.callback_query.message;
